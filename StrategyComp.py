@@ -52,16 +52,44 @@ df = ticker_list[0]
 
 def load_quotes(asset):
     return yf.download(asset,start='2018-01-01')
-for i in range(500):
-    if type(df['Symbol'][i]) == str:
-        a = load_quotes(df['Symbol'][i])
-        try:
-            bt = Backtest(a,SMAcross,cash=100000,exclusive_orders=True)
-        except ValueError:
-            continue
+
+def precise_load_quotes(asset):
+    return yf.download(asset,start='2023-12-01',end='2023-12-30',interval='15m')
+
+def get_data(length=50,specify=None,ent = 'a'):
+    rev = []
+    if specify== None:
+        
+        ticker_list = pd.read_html(
+        'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
+        df = ticker_list[0]
+
+        for i in range(length):
+            if type(df['Symbol'][i]) == str:
+
+                a = load_quotes(df['Symbol'][i])
+                try:
+                    bt = Backtest(a,SMAcross,cash=100000,exclusive_orders=True)
+                except ValueError:
+                    continue
+                output = bt.run()
+                rev.append(output['Return (Ann.) [%]'])
+
+            if i % 40 == 0:
+                print(i)
+
+    elif ent == 'a':
+        a = precise_load_quotes(specify)
+        bt = Backtest(a,SMAcross,cash=100000,exclusive_orders=True)
         output = bt.run()
         rev.append(output['Return (Ann.) [%]'])
-    if i % 40 == 0:
-        print(i)
+        display(a)
 
+    else:
+        a = load_quotes(specify)
+        bt = Backtest(a,SMAcross,cash=100000,exclusive_orders=True)
+        output = bt.run()
+        rev.append(output['Return (Ann.) [%]'])
+
+    return rev
 bt.plot()
